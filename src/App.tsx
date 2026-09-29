@@ -6,10 +6,12 @@ import { Kbd } from "./components/Kbd";
 import { LoadingOverlay } from "./components/LoadingOverlay";
 import { Piano } from "./components/Piano";
 import { StartOverlay } from "./components/StartOverlay";
+import { Transport } from "./components/Transport";
 import { keyHints } from "./input/keyboardMap";
 import { useComputerKeyboard } from "./input/useComputerKeyboard";
 import { useMidi } from "./input/useMidi";
 import { clampBaseOctave, keyRange, MIN_BASE_OCTAVE, type LabelMode } from "./music/notes";
+import { useRecorder } from "./recording/useRecorder";
 import { NoteTracker } from "./state/noteTracker";
 import { useMediaQuery } from "./state/useMediaQuery";
 import { usePersistentState } from "./state/usePersistentState";
@@ -45,6 +47,7 @@ export default function App() {
   const ready = status.state === "ready";
   useComputerKeyboard(tracker, ready, baseOctave);
   const midi = useMidi(tracker, context !== null);
+  const recorder = useRecorder(tracker);
 
   const start = () => {
     const ctx = new AudioContext();
@@ -57,7 +60,18 @@ export default function App() {
       {!context && <StartOverlay onStart={start} />}
 
       <header className="flex flex-col gap-4">
-        <h1 className="text-lg font-semibold">Piano</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-lg font-semibold">Piano</h1>
+          <Transport
+            mode={recorder.mode}
+            elapsed={recorder.elapsed}
+            duration={recorder.take?.duration ?? null}
+            disabled={!ready}
+            onRecord={recorder.record}
+            onPlay={recorder.play}
+            onStop={recorder.stop}
+          />
+        </div>
         <ControlBar
           volume={volume}
           onVolumeChange={setVolume}

@@ -87,3 +87,25 @@ describe("NoteTracker", () => {
     expect(tracker.getSnapshot().held.has(60)).toBe(true);
   });
 });
+
+describe("NoteTracker input events", () => {
+  it("reports only inputs that changed state", () => {
+    const seen: string[] = [];
+    tracker.onInput((input) => seen.push(`${input.type} ${input.source}`));
+    tracker.press(60, "kbd", 90);
+    tracker.press(60, "kbd", 90);
+    tracker.release(60, "midi");
+    tracker.setPedal("kbd", true);
+    tracker.setPedal("kbd", true);
+    tracker.release(60, "kbd");
+    expect(seen).toEqual(["press kbd", "pedal kbd", "release kbd"]);
+  });
+
+  it("releaseAll also lifts pedals held by matching sources", () => {
+    tracker.setPedal("kbd:pedal", true);
+    tracker.press(60, "kbd:KeyZ", 90);
+    tracker.releaseAll("kbd:");
+    expect(log).toEqual(["on 60", "off 60"]);
+    expect(tracker.getSnapshot().pedal).toBe(false);
+  });
+});
