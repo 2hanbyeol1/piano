@@ -2,6 +2,7 @@ import { useRef, type PointerEvent } from "react";
 import { FIXED_VELOCITY } from "../input/useComputerKeyboard";
 import { isBlack, noteName, type LabelMode } from "../music/notes";
 import type { NoteTracker } from "../state/noteTracker";
+import { Kbd } from "./Kbd";
 
 interface PianoProps {
   low: number;
@@ -61,8 +62,14 @@ export function Piano({ low, high, held, labelMode, hints, disabled, tracker }: 
   };
 
   const label = (midi: number) => (
-    <span className="pointer-events-none flex flex-col items-center gap-0.5 leading-none">
-      {hints?.has(midi) && <span className="text-[0.7rem] font-semibold opacity-60">{hints.get(midi)!.join(" ")}</span>}
+    <span className="pointer-events-none flex flex-col items-center gap-1 leading-none">
+      {hints?.has(midi) && (
+        <span className="flex flex-col items-center gap-0.5 opacity-70">
+          {hints.get(midi)!.map((hint) => (
+            <Kbd key={hint}>{hint}</Kbd>
+          ))}
+        </span>
+      )}
       {labelMode !== "off" && <span className="text-[0.65rem]">{noteName(midi, labelMode)}</span>}
     </span>
   );

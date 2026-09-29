@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { createPianoEngine } from "./audio/engines";
 import { useEngine } from "./audio/useEngine";
 import { ControlBar } from "./components/ControlBar";
+import { Kbd } from "./components/Kbd";
 import { LoadingOverlay } from "./components/LoadingOverlay";
 import { Piano } from "./components/Piano";
 import { StartOverlay } from "./components/StartOverlay";
@@ -90,8 +91,7 @@ export default function App() {
       </main>
 
       <footer className="text-center text-xs text-slate-500 dark:text-slate-400">
-        <kbd>Z</kbd>–<kbd>/</kbd> 아래 옥타브 · <kbd>Q</kbd>–<kbd>]</kbd> 위 옥타브 · 한 줄 위(<kbd>S</kbd>{" "}
-        <kbd>2</kbd> …)는 검은건반 · <kbd>Space</kbd> 서스테인
+        <Kbd>Space</Kbd> 서스테인
       </footer>
     </div>
   );
