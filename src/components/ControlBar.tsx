@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { MidiStatus } from "../input/useMidi";
 import { noteName, type LabelMode } from "../music/notes";
+import { fieldLabel, segment, segmentGroup } from "./ui";
 
 interface ControlBarProps {
   volume: number;
@@ -19,27 +20,25 @@ interface ControlBarProps {
 }
 
 const LABEL_MODES: { mode: LabelMode; text: string }[] = [
-  { mode: "letter", text: "C D E" },
+  { mode: "letter", text: "CDE" },
   { mode: "solfege", text: "도레미" },
-  { mode: "off", text: "끄기" },
+  { mode: "off", text: "없음" },
 ];
 
-function Group({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
+      {/* Fixed width on phones, where fields stack, so the controls line up in a column. */}
+      <span className={`${fieldLabel} w-10 sm:w-auto`}>{label}</span>
       {children}
     </div>
   );
 }
 
-function Pill({ on, children }: { on: boolean; children: ReactNode }) {
+function Status({ on, children }: { on: boolean; children: ReactNode }) {
   return (
-    <span
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-        on ? "bg-sky-500 text-white" : "bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-      }`}
-    >
+    <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+      <span className={`size-2 rounded-full ${on ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`} />
       {children}
     </span>
   );
@@ -48,27 +47,22 @@ function Pill({ on, children }: { on: boolean; children: ReactNode }) {
 function midiText(midi: MidiStatus): { on: boolean; text: string } {
   switch (midi.kind) {
     case "unsupported":
-      return { on: false, text: "MIDI 미지원 브라우저" };
+      return { on: false, text: "MIDI 미지원" };
     case "pending":
       return { on: false, text: "MIDI 확인 중" };
     case "denied":
-      return { on: false, text: "MIDI 권한 거부됨" };
+      return { on: false, text: "MIDI 권한 없음" };
     case "ready":
-      return midi.inputs.length > 0
-        ? { on: true, text: `MIDI: ${midi.inputs.join(", ")}` }
-        : { on: false, text: "MIDI 미연결" };
+      return midi.inputs.length > 0 ? { on: true, text: midi.inputs.join(", ") } : { on: false, text: "MIDI 미연결" };
   }
 }
-
-const buttonClass =
-  "rounded-md px-2 py-1 text-sm hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-slate-800";
 
 export function ControlBar(props: ControlBarProps) {
   const midi = midiText(props.midi);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-      <Group label="볼륨">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <Field label="볼륨">
         <input
           type="range"
           min={0}
@@ -76,52 +70,47 @@ export function ControlBar(props: ControlBarProps) {
           step={0.01}
           value={props.volume}
           onChange={(e) => props.onVolumeChange(Number(e.target.value))}
-          className="w-24 accent-sky-500"
+          className="h-8 w-24 accent-slate-700 dark:accent-slate-300"
           aria-label="볼륨"
         />
-      </Group>
+      </Field>
 
-      <Group label="옥타브">
-        <button className={buttonClass} onClick={() => props.onShiftOctave(-1)} disabled={!props.canShiftDown} aria-label="옥타브 내리기">
-          ◀
-        </button>
-        <span className="w-16 text-center tabular-nums">
-          {noteName(props.low, "letter")}–{noteName(props.high, "letter")}
-        </span>
-        <button className={buttonClass} onClick={() => props.onShiftOctave(1)} disabled={!props.canShiftUp} aria-label="옥타브 올리기">
-          ▶
-        </button>
-      </Group>
+      <Field label="옥타브">
+        <div className={segmentGroup}>
+          <button className={segment(false)} onClick={() => props.onShiftOctave(-1)} disabled={!props.canShiftDown} aria-label="옥타브 내리기">
+            ◀
+          </button>
+          <span className="flex w-16 items-center justify-center border-x border-slate-300 text-sm tabular-nums dark:border-slate-700">
+            {noteName(props.low, "letter")}–{noteName(props.high, "letter")}
+          </span>
+          <button className={segment(false)} onClick={() => props.onShiftOctave(1)} disabled={!props.canShiftUp} aria-label="옥타브 올리기">
+            ▶
+          </button>
+        </div>
+      </Field>
 
-      <Group label="음이름">
-        <div className="flex rounded-md border border-slate-300 dark:border-slate-700">
+      <Field label="표시">
+        <div className={segmentGroup} role="group" aria-label="음이름">
           {LABEL_MODES.map(({ mode, text }) => (
-            <button
-              key={mode}
-              onClick={() => props.onLabelModeChange(mode)}
-              className={`px-2 py-1 text-xs first:rounded-l-md last:rounded-r-md ${
-                props.labelMode === mode ? "bg-sky-500 text-white" : "hover:bg-slate-200 dark:hover:bg-slate-800"
-              }`}
-            >
+            <button key={mode} onClick={() => props.onLabelModeChange(mode)} className={segment(props.labelMode === mode)}>
               {text}
             </button>
           ))}
         </div>
-      </Group>
+        <div className={segmentGroup}>
+          <button
+            onClick={() => props.onShowHintsChange(!props.showHints)}
+            className={segment(props.showHints)}
+            aria-pressed={props.showHints}
+          >
+            키 힌트
+          </button>
+        </div>
+      </Field>
 
-      <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-        <input
-          type="checkbox"
-          checked={props.showHints}
-          onChange={(e) => props.onShowHintsChange(e.target.checked)}
-          className="accent-sky-500"
-        />
-        키 힌트
-      </label>
-
-      <div className="flex items-center gap-2">
-        <Pill on={props.pedal}>서스테인</Pill>
-        <Pill on={midi.on}>{midi.text}</Pill>
+      <div className="flex items-center gap-4 sm:ml-auto">
+        <Status on={props.pedal}>서스테인</Status>
+        <Status on={midi.on}>{midi.text}</Status>
       </div>
     </div>
   );

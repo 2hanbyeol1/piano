@@ -70,7 +70,10 @@ export function Piano({ low, high, held, labelMode, hints, disabled, tracker }: 
           ))}
         </span>
       )}
-      {labelMode !== "off" && <span className="text-[0.65rem]">{noteName(midi, labelMode)}</span>}
+      {labelMode !== "off" && (
+        // Black keys are too narrow for note names on phones.
+        <span className={`text-[0.65rem] ${isBlack(midi) ? "hidden sm:block" : ""}`}>{noteName(midi, labelMode)}</span>
+      )}
     </span>
   );
 

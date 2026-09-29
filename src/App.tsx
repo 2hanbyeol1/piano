@@ -4,12 +4,14 @@ import { useEngine } from "./audio/useEngine";
 import { ControlBar } from "./components/ControlBar";
 import { Kbd } from "./components/Kbd";
 import { LoadingOverlay } from "./components/LoadingOverlay";
+import { Metronome } from "./components/Metronome";
 import { Piano } from "./components/Piano";
 import { StartOverlay } from "./components/StartOverlay";
 import { Transport } from "./components/Transport";
 import { keyHints } from "./input/keyboardMap";
 import { useComputerKeyboard } from "./input/useComputerKeyboard";
 import { useMidi } from "./input/useMidi";
+import { useMetronome } from "./metronome/useMetronome";
 import { clampBaseOctave, keyRange, MIN_BASE_OCTAVE, type LabelMode } from "./music/notes";
 import { useRecorder } from "./recording/useRecorder";
 import { NoteTracker } from "./state/noteTracker";
@@ -49,6 +51,12 @@ export default function App() {
   const midi = useMidi(tracker, context !== null);
   const recorder = useRecorder(tracker);
 
+  const [metronomeOn, setMetronomeOn] = useState(false);
+  const [bpm, setBpm] = usePersistentState("piano.metronome.bpm", 100);
+  const [beatsPerBar, setBeatsPerBar] = usePersistentState("piano.metronome.beatsPerBar", 4);
+  const [clickVolume, setClickVolume] = usePersistentState("piano.metronome.volume", 0.5);
+  const currentBeat = useMetronome(context, { enabled: metronomeOn, bpm, beatsPerBar, volume: clickVolume });
+
   const start = () => {
     const ctx = new AudioContext();
     void ctx.resume();
@@ -56,12 +64,12 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col gap-6 px-4 py-6 sm:px-8">
+    <div className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-5 px-4 py-5 sm:px-8 sm:py-8">
       {!context && <StartOverlay onStart={start} />}
 
-      <header className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold">Piano</h1>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold">Piano</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <Transport
             mode={recorder.mode}
             elapsed={recorder.elapsed}
@@ -71,7 +79,22 @@ export default function App() {
             onPlay={recorder.play}
             onStop={recorder.stop}
           />
+          <span className="mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700" aria-hidden />
+          <Metronome
+            enabled={metronomeOn}
+            onEnabledChange={setMetronomeOn}
+            bpm={bpm}
+            onBpmChange={setBpm}
+            beatsPerBar={beatsPerBar}
+            onBeatsPerBarChange={setBeatsPerBar}
+            volume={clickVolume}
+            onVolumeChange={setClickVolume}
+            currentBeat={currentBeat}
+          />
         </div>
+      </header>
+
+      <section className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
         <ControlBar
           volume={volume}
           onVolumeChange={setVolume}
@@ -87,10 +110,10 @@ export default function App() {
           pedal={pedal}
           midi={midi}
         />
-      </header>
+      </section>
 
-      <main className="relative flex flex-1 items-center">
-        <div className="h-[45vh] max-h-80 min-h-40 w-full">
+      <main className="relative rounded-xl bg-slate-800 p-2 pt-5 shadow-lg dark:bg-slate-900 dark:ring-1 dark:ring-slate-800">
+        <div className="h-[clamp(12rem,32vw,20rem)]">
           <Piano
             low={low}
             high={high}
