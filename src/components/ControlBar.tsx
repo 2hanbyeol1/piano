@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-import { ENGINES } from "../audio/engines";
 import type { MidiStatus } from "../input/useMidi";
 import { noteName, type LabelMode } from "../music/notes";
 
 interface ControlBarProps {
-  engineId: string;
-  onEngineChange: (id: string) => void;
   volume: number;
   onVolumeChange: (volume: number) => void;
   low: number;
@@ -71,23 +68,6 @@ export function ControlBar(props: ControlBarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-      <Group label="음원 (비교)">
-        <select
-          value={props.engineId}
-          onChange={(e) => {
-            props.onEngineChange(e.target.value);
-            e.target.blur();
-          }}
-          className="rounded-md border border-slate-300 bg-transparent px-2 py-1 dark:border-slate-700 dark:bg-slate-900"
-        >
-          {ENGINES.map((engine) => (
-            <option key={engine.id} value={engine.id}>
-              {engine.label}
-            </option>
-          ))}
-        </select>
-      </Group>
-
       <Group label="볼륨">
         <input
           type="range"

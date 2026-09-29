@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ENGINES } from "./engines";
-import type { InstrumentEngine } from "./types";
+import type { EngineFactory, InstrumentEngine } from "./types";
 
 export type EngineStatus =
   | { state: "idle" }
@@ -8,8 +7,11 @@ export type EngineStatus =
   | { state: "ready" }
   | { state: "error"; message: string };
 
-/** Creates and loads the selected engine; `engineRef` is only set once it is ready to play. */
-export function useEngine(context: AudioContext | null, engineId: string, volume: number) {
+/**
+ * Creates and loads an engine; `engineRef` is only set once it is ready to play.
+ * `create` must be stable (e.g. module-level), since changing it reloads the engine.
+ */
+export function useEngine(context: AudioContext | null, create: EngineFactory, volume: number) {
   const engineRef = useRef<InstrumentEngine | null>(null);
   const volumeRef = useRef(volume);
   const [status, setStatus] = useState<EngineStatus>({ state: "idle" });
@@ -21,8 +23,7 @@ export function useEngine(context: AudioContext | null, engineId: string, volume
 
   useEffect(() => {
     if (!context) return;
-    const option = ENGINES.find((e) => e.id === engineId) ?? ENGINES[0];
-    const engine = option.create(context);
+    const engine = create(context);
     let cancelled = false;
 
     engine.setVolume(volumeRef.current);
@@ -46,7 +47,7 @@ export function useEngine(context: AudioContext | null, engineId: string, volume
       if (engineRef.current === engine) engineRef.current = null;
       engine.dispose();
     };
-  }, [context, engineId]);
+  }, [context, create]);
 
   return { engineRef, status };
 }

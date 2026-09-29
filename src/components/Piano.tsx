@@ -8,7 +8,7 @@ interface PianoProps {
   high: number;
   held: ReadonlySet<number>;
   labelMode: LabelMode;
-  hints: Map<number, string> | null;
+  hints: Map<number, string[]> | null;
   disabled: boolean;
   tracker: NoteTracker;
 }
@@ -62,7 +62,7 @@ export function Piano({ low, high, held, labelMode, hints, disabled, tracker }: 
 
   const label = (midi: number) => (
     <span className="pointer-events-none flex flex-col items-center gap-0.5 leading-none">
-      {hints?.has(midi) && <span className="text-[0.7rem] font-semibold opacity-60">{hints.get(midi)}</span>}
+      {hints?.has(midi) && <span className="text-[0.7rem] font-semibold opacity-60">{hints.get(midi)!.join(" ")}</span>}
       {labelMode !== "off" && <span className="text-[0.65rem]">{noteName(midi, labelMode)}</span>}
     </span>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { NoteTracker } from "../state/noteTracker";
-import { codeToMidi, OCTAVE_DOWN_CODE, OCTAVE_UP_CODE, SUSTAIN_CODE } from "./keyboardMap";
+import { codeToMidi, SUSTAIN_CODE } from "./keyboardMap";
 
 export const FIXED_VELOCITY = 90;
 const SOURCE_PREFIX = "kbd:";
@@ -13,16 +13,9 @@ function isTextEntry(target: EventTarget | null): boolean {
   );
 }
 
-export function useComputerKeyboard(
-  tracker: NoteTracker,
-  enabled: boolean,
-  baseOctave: number,
-  shiftOctave: (delta: number) => void,
-) {
+export function useComputerKeyboard(tracker: NoteTracker, enabled: boolean, baseOctave: number) {
   const baseOctaveRef = useRef(baseOctave);
   baseOctaveRef.current = baseOctave;
-  const shiftOctaveRef = useRef(shiftOctave);
-  shiftOctaveRef.current = shiftOctave;
 
   useEffect(() => {
     if (!enabled) return;
@@ -32,15 +25,12 @@ export function useComputerKeyboard(
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || isTextEntry(e.target)) return;
       const midi = codeToMidi(e.code, baseOctaveRef.current);
-      const handled = midi !== undefined || e.code === SUSTAIN_CODE || e.code === OCTAVE_DOWN_CODE || e.code === OCTAVE_UP_CODE;
-      if (!handled) return;
+      if (midi === undefined && e.code !== SUSTAIN_CODE) return;
       // Stops Space from scrolling or clicking the focused control.
       e.preventDefault();
       if (e.repeat) return;
 
       if (e.code === SUSTAIN_CODE) tracker.setPedal(SOURCE_PREFIX + "pedal", true);
-      else if (e.code === OCTAVE_DOWN_CODE) shiftOctaveRef.current(-1);
-      else if (e.code === OCTAVE_UP_CODE) shiftOctaveRef.current(1);
       else if (midi !== undefined) {
         pressed.set(e.code, midi);
         tracker.press(midi, SOURCE_PREFIX + e.code, FIXED_VELOCITY);

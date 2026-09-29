@@ -12,8 +12,7 @@
   "dependencies": {
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "smplr": "^1.1.0",
-    "tone": "^15.1.22"
+    "smplr": "^1.1.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

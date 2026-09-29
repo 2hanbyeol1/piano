@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
-import { DEFAULT_ENGINE_ID } from "./audio/engines";
+import { createPianoEngine } from "./audio/engines";
 import { useEngine } from "./audio/useEngine";
 import { ControlBar } from "./components/ControlBar";
 import { LoadingOverlay } from "./components/LoadingOverlay";
@@ -17,7 +17,6 @@ const DEFAULT_BASE_OCTAVE = 3;
 
 export default function App() {
   const [context, setContext] = useState<AudioContext | null>(null);
-  const [engineId, setEngineId] = usePersistentState("piano.engine", DEFAULT_ENGINE_ID);
   const [volume, setVolume] = usePersistentState("piano.volume", 0.8);
   const [labelMode, setLabelMode] = usePersistentState<LabelMode>("piano.labelMode", "letter");
   const [showHints, setShowHints] = usePersistentState("piano.showHints", true);
@@ -31,7 +30,7 @@ export default function App() {
     [visibleOctaves],
   );
 
-  const { engineRef, status } = useEngine(context, engineId, volume);
+  const { engineRef, status } = useEngine(context, createPianoEngine, volume);
   const tracker = useMemo(
     () =>
       new NoteTracker({
@@ -43,7 +42,7 @@ export default function App() {
   const { held, pedal } = useSyncExternalStore(tracker.subscribe, tracker.getSnapshot);
 
   const ready = status.state === "ready";
-  useComputerKeyboard(tracker, ready, baseOctave, shiftOctave);
+  useComputerKeyboard(tracker, ready, baseOctave);
   const midi = useMidi(tracker, context !== null);
 
   const start = () => {
@@ -59,8 +58,6 @@ export default function App() {
       <header className="flex flex-col gap-4">
         <h1 className="text-lg font-semibold">Piano</h1>
         <ControlBar
-          engineId={engineId}
-          onEngineChange={setEngineId}
           volume={volume}
           onVolumeChange={setVolume}
           low={low}
@@ -93,8 +90,8 @@ export default function App() {
       </main>
 
       <footer className="text-center text-xs text-slate-500 dark:text-slate-400">
-        <kbd>A</kbd>–<kbd>'</kbd> 흰건반 · <kbd>W E T Y U O P</kbd> 검은건반 · <kbd>Z</kbd>/<kbd>X</kbd> 옥타브 ·{" "}
-        <kbd>Space</kbd> 서스테인
+        <kbd>Z</kbd>–<kbd>/</kbd> 아래 옥타브 · <kbd>Q</kbd>–<kbd>]</kbd> 위 옥타브 · 한 줄 위(<kbd>S</kbd>{" "}
+        <kbd>2</kbd> …)는 검은건반 · <kbd>Space</kbd> 서스테인
       </footer>
     </div>
   );
